@@ -1067,6 +1067,38 @@ function toggleInternoBtn() {
 }
 window.toggleInternoBtn = toggleInternoBtn
 
+function showTableQR(tableId, tableNumber) {
+  const url = `https://restaurant-platform-navy.vercel.app/table/${tableId}`
+  const QRCode = require('qrcode')
+  const modal = document.createElement('div')
+  modal.id = 'qrModal'
+  modal.style.cssText = 'position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;'
+  modal.innerHTML = `
+    <div onclick="event.stopPropagation()" style="width:340px;padding:32px;border-radius:24px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);text-align:center;">
+      <h3 style="font-size:18px;font-weight:700;color:white;margin-bottom:4px;">📱 QR Код</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:20px;">Маса ${tableNumber}</p>
+      <canvas id="qrCanvas" style="border-radius:12px;"></canvas>
+      <p style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:12px;word-break:break-all;">${url}</p>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button onclick="downloadQR(${tableNumber})" style="flex:1;padding:10px;border-radius:10px;background:linear-gradient(135deg,#ff5500,#ff9000);color:white;border:none;font-weight:600;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;">📥 Преземи</button>
+        <button onclick="document.getElementById('qrModal').remove()" style="flex:1;padding:10px;border-radius:10px;background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.2);font-weight:600;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;">✕ Затвори</button>
+      </div>
+    </div>`
+  modal.onclick = () => modal.remove()
+  document.body.appendChild(modal)
+  QRCode.toCanvas(document.getElementById('qrCanvas'), url, { width: 260, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+}
+window.showTableQR = showTableQR
+
+function downloadQR(tableNumber) {
+  const canvas = document.getElementById('qrCanvas')
+  const link = document.createElement('a')
+  link.download = `masa-${tableNumber}-qr.png`
+  link.href = canvas.toDataURL()
+  link.click()
+}
+window.downloadQR = downloadQR
+
 function switchAdmin2Date(date) {
   window._admin2Date = date
   renderAdmin2()
@@ -1256,7 +1288,8 @@ async function loadTablesAdmin() {
   const ac = document.getElementById('adminContent')
   ac.innerHTML = '<p style="color:#90E0EF;padding:20px;">Се вчитува...</p>'
   const { data: t } = await supabase.from('tables').select('*').eq('restaurant_id', currentRestaurant.id).order('table_number')
-  ac.innerHTML = `<div style="max-width:700px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-size:18px;font-weight:700;">🪑 Маси</h3><button onclick="addTable()" style="padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,#ff5500,#ff9000);color:white;border:none;font-weight:600;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;">+ Додај маса</button></div>${!t || t.length === 0 ? `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);"><p style="font-size:32px;margin-bottom:12px;">🪑</p><p>Нема маси. Додај!</p></div>` : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">${t.map(table => `<div style="padding:16px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);text-align:center;"><p style="font-size:28px;font-weight:900;margin-bottom:4px;">${table.table_number}</p><p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:4px;">Капацитет: ${table.capacity || '-'}</p><p style="font-size:11px;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:10px;background:${table.status === 'ЗАФАТЕНА' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)'};color:${table.status === 'ЗАФАТЕНА' ? '#86EFAC' : 'rgba(255,255,255,0.5)'};">${table.status || 'СЛОБОДНА'}</p><button onclick="deleteTable('${table.id}')" style="display:block;width:100%;padding:6px;border-radius:8px;background:rgba(220,38,38,0.15);color:#FCA5A5;border:1px solid rgba(220,38,38,0.3);font-size:12px;cursor:pointer;font-family:'Segoe UI',sans-serif;">🗑️ Избриши</button></div>`).join('')}</div>`}</div>`
+  ac.innerHTML = `<div style="max-width:700px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-size:18px;font-weight:700;">🪑 Маси</h3><button onclick="addTable()" style="padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,#ff5500,#ff9000);color:white;border:none;font-weight:600;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;">+ Додај маса</button></div>${!t || t.length === 0 ? `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);"><p style="font-size:32px;margin-bottom:12px;">🪑</p><p>Нема маси. Додај!</p></div>` : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">${t.map(table => `<div style="padding:16px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);text-align:center;"><p style="font-size:28px;font-weight:900;margin-bottom:4px;">${table.table_number}</p><p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:4px;">Капацитет: ${table.capacity || '-'}</p><p style="font-size:11px;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:10px;background:${table.status === 'ЗАФАТЕНА' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)'};color:${table.status === 'ЗАФАТЕНА' ? '#86EFAC' : 'rgba(255,255,255,0.5)'};">${table.status || 'СЛОБОДНА'}</p><button onclick="showTableQR('${table.id}', ${table.table_number})" style="display:block;width:100%;padding:6px;border-radius:8px;background:rgba(0,180,216,0.15);color:#00B4D8;border:1px solid rgba(0,180,216,0.3);font-size:12px;cursor:pointer;font-family:'Segoe UI',sans-serif;margin-bottom:6px;">📱 QR Код</button>
+<button onclick="deleteTable('${table.id}')" style="display:block;width:100%;padding:6px;border-radius:8px;background:rgba(220,38,38,0.15);color:#FCA5A5;border:1px solid rgba(220,38,38,0.3);font-size:12px;cursor:pointer;font-family:'Segoe UI',sans-serif;">🗑️ Избриши</button></div>`).join('')}</div>`}</div>`
 }
 
 async function addTable() {

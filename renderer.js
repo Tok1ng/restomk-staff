@@ -42,6 +42,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'F3') showAdminPin()
   if (e.key === 'Escape') closeItemModal()
   if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); toggleInternoBtn() }
+  if (e.ctrlKey && e.key.toLowerCase() === 'k') { e.preventDefault(); showSetPin2() }
 })
 
 async function login() {
